@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Year-Round Recovery Awareness Calendar</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #0D1F18 0%, #0F231E 40%, #0D1A28 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Georgia, serif;
+      padding: 20px;
+    }
+    ::-webkit-scrollbar { width: 0; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const DAYS_OF_WEEK = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+    const EVENTS = [
+      // JANUARY
+      { id: 1,  month: 0, day: 1, endDay: 31, name: "Substance Use Disorder Treatment Month", type: "month", color: "#5B8DB8", description: "Led by SAMHSA, this month highlights the effectiveness of evidence-based treatments, supports those seeking help, and works to reduce the stigma surrounding substance use disorder and recovery." },
+      { id: 2,  month: 0, day: 1, endDay: 31, name: "Mental Wellness Month", type: "month", color: "#72A67A", description: "Dedicated to promoting mental health, reducing stigma, and encouraging self-care, mindfulness, and proactive steps for mental well-being throughout the new year." },
+      { id: 3,  month: 0, day: 1, endDay: 31, name: "Dry January", type: "month", color: "#8ABBE0", description: "A public health initiative focused on abstaining from alcohol for the entire month, promoting 'sober curious' behavior and a healthy, alcohol-free start to the year." },
+      { id: 4,  month: 0, day: 1, endDay: 31, name: "National Codependency Awareness Month", type: "month", color: "#C4945A", description: "Aims to raise awareness about the negative impacts of codependent behavior and how it affects individuals in recovery and those who love them." },
+      { id: 5,  month: 0, day: 1, name: "New Year's Day – Recovery Resolutions", type: "day", color: "#6B9E78", description: "A common time for recovery-focused resolutions that prioritize long-term habits over quick fixes. The start of a new year offers a powerful opportunity to set intentions for health, sobriety, and well-being." },
+      { id: 6,  month: 0, day: 4, name: "International Mind-Body Wellness Day", type: "day", color: "#8E72B0", description: "Focuses on the powerful connection between mental and physical health. This day encourages practices like mindfulness, movement, and nutrition that support whole-person wellness and recovery." },
+      { id: 7,  month: 0, day: 30, name: "Parent Mental Health Day", type: "day", color: "#D4845A", description: "An observance dedicated to the mental health of parents and caregivers, recognizing the unique pressures they face and the importance of seeking support for themselves." },
+      // FEBRUARY
+      { id: 8,  month: 1, day: 1, endDay: 7, name: "National Patient Recognition Week", type: "week", color: "#5B8DB8", description: "Highlights the importance of care and support during recovery. This week honors patients' courage and the healthcare workers who walk alongside them." },
+      { id: 9,  month: 1, day: 8, endDay: 14, name: "Sepsis Survivor Week", type: "week", color: "#C45A5A", description: "Supports individuals recovering from sepsis and raises awareness about this life-threatening condition that affects many in the broader recovery community." },
+      { id: 10, month: 1, day: 11, name: "Recovery Day", type: "day", color: "#6B9E78", description: "A dedicated day for celebrating addiction recovery — honoring the strength of those who have walked the path of recovery and inspiring those who are just beginning." },
+      { id: 11, month: 1, day: 14, name: "Valentine's Day – Mindfulness in Recovery", type: "day", color: "#D4708A", description: "Because Valentine's Day can be a high-risk day for emotional triggers like loneliness and grief, it serves as a critical moment to practice mindfulness, gratitude, and healthy coping strategies." },
+      { id: 12, month: 1, day: 20, name: "National Caregivers Day", type: "day", color: "#C4945A", description: "Honors those providing care to patients in recovery. Caregivers play an essential role in supporting loved ones through treatment, and this day acknowledges their dedication and sacrifice." },
+      { id: 13, month: 1, day: 23, endDay: 28, name: "National Eating Disorders Awareness Week", type: "week", color: "#8E72B0", description: "Aims to educate and support those with eating disorders, which frequently co-occur with substance use disorders. Runs Feb 23 – Mar 1." },
+      // MARCH
+      { id: 14, month: 2, day: 1, endDay: 31, name: "Problem Gambling Awareness Month", type: "month", color: "#C4945A", description: "A national campaign to increase awareness of gambling addiction and promote treatment and recovery services for those struggling with problem gambling." },
+      { id: 15, month: 2, day: 1, endDay: 31, name: "Self-Harm Awareness Month", type: "month", color: "#C45A5A", description: "Focuses on raising awareness about non-suicidal self-injury, breaking down shame and stigma, and connecting people with compassionate support and treatment options." },
+      { id: 16, month: 2, day: 1, name: "Self-Injury Awareness Day", type: "day", color: "#C45A5A", description: "A day to break the stigma surrounding self-harm and encourage open, compassionate conversation and support for those who are struggling." },
+      { id: 17, month: 2, day: 2, name: "World Teen Mental Wellness Day", type: "day", color: "#72A67A", description: "Dedicated to raising awareness of mental health issues among teenagers, encouraging early intervention and creating environments where young people feel safe to speak up." },
+      { id: 18, month: 2, day: 11, name: "National No Smoking Day", type: "day", color: "#5B8DB8", description: "Encourages smoking cessation and raises awareness about the health impacts of tobacco use. Quitting smoking is an important part of holistic recovery for many." },
+      { id: 19, month: 2, day: 16, endDay: 22, name: "National Drug and Alcohol Facts Week", type: "week", color: "#8E72B0", description: "An annual, week-long event focused on educating youth about the science of drug use and addiction, connecting students with researchers and experts who provide factual information." },
+      { id: 20, month: 2, day: 30, name: "World Bipolar Day", type: "day", color: "#D4845A", description: "Aims to raise awareness of bipolar disorders and eliminate social stigma. Bipolar disorder and substance use disorders frequently co-occur, making awareness and education critical." },
+      // APRIL
+      { id: 21, month: 3, day: 1, endDay: 30, name: "Alcohol Awareness Month", type: "month", color: "#5B8DB8", description: "Sponsored by NCADD, this month is dedicated to raising awareness about the causes and treatment of alcoholism and reducing the stigma that prevents people from seeking help." },
+      { id: 22, month: 3, day: 1, endDay: 30, name: "Stress Awareness Month", type: "month", color: "#C4945A", description: "Focuses on identifying the causes and solutions to modern stress. Chronic stress is a major risk factor for substance use disorders and relapse, making stress management a key recovery tool." },
+      { id: 23, month: 3, day: 1, endDay: 30, name: "Sexual Assault Awareness & Prevention Month", type: "month", color: "#D4708A", description: "Focuses on prevention and supporting survivors. Trauma from sexual assault is closely linked to substance use disorders, and this month elevates survivor voices and available resources." },
+      { id: 24, month: 3, day: 1, endDay: 30, name: "National Counseling Awareness Month", type: "month", color: "#72A67A", description: "Highlights the essential work of counselors and the profound benefits of mental health counseling in supporting recovery, reducing stigma, and improving overall well-being." },
+      { id: 25, month: 3, day: 5, name: "National Self-Care Day", type: "day", color: "#6B9E78", description: "Encourages individuals to prioritize their physical and mental well-being. In recovery, self-care is not a luxury — it is a cornerstone of a sustainable, healthy lifestyle." },
+      { id: 26, month: 3, day: 2, name: "National Alcohol Screening Day", type: "day", color: "#8ABBE0", description: "Held the first Thursday of April, this day focuses on identifying and treating alcohol dependency early through confidential screenings and connections to treatment resources." },
+      { id: 27, month: 3, day: 26, name: "National Prescription Drug Take Back Day", type: "day", color: "#8E72B0", description: "A DEA-organized event (April 26, 2026) giving the public a safe way to dispose of unused, unwanted, or expired prescription medications and keep them out of the wrong hands." },
+      { id: 28, month: 3, day: 29, name: "National Fentanyl Awareness Day", type: "day", color: "#C45A5A", description: "A critical day to educate communities and protect against the deadly dangers of fentanyl and counterfeit prescription pills, which are responsible for a growing number of overdose deaths." },
+      // MAY
+      { id: 29, month: 4, day: 1, endDay: 31, name: "Mental Health Awareness Month", type: "month", color: "#72A67A", description: "Since 1949, Mental Health America has led observance of this month, reaching millions through media, events, and screenings to fight stigma and promote mental health support for all." },
+      { id: 30, month: 4, day: 1, endDay: 31, name: "Borderline Personality Disorder Awareness Month", type: "month", color: "#8E72B0", description: "Dedicated to raising awareness for BPD, which frequently co-occurs with substance use disorders. This month promotes understanding and compassionate, evidence-based care." },
+      { id: 31, month: 4, day: 1, endDay: 7, name: "Maternal Mental Health Awareness Week", type: "week", color: "#D4708A", description: "Promotes awareness of mental health challenges during and after pregnancy, including postpartum depression and anxiety, which can be intertwined with substance use concerns." },
+      { id: 32, month: 4, day: 6, name: "World Maternal Mental Health Day", type: "day", color: "#D4708A", description: "The first Wednesday of May specifically highlights maternal mental health challenges, calling for better support systems, reduced stigma, and accessible treatment for new and expecting mothers." },
+      { id: 33, month: 4, day: 3, endDay: 9, name: "Children's Mental Health Awareness Week", type: "week", color: "#6B9E78", description: "Highlights mental health for children and youth (May 3–9, 2026), promoting early intervention and creating safe spaces for young people to discuss their mental health needs." },
+      { id: 34, month: 4, day: 10, endDay: 16, name: "National Prevention Week", type: "week", color: "#5B8DB8", description: "A public education platform (May 10–16, 2026) for preventing substance use and promoting mental health. Communities across the nation host events, walks, and awareness campaigns." },
+      { id: 35, month: 4, day: 10, endDay: 16, name: "National Women's Health Week", type: "week", color: "#D4708A", description: "Encourages women to make their health a priority (May 10–16, 2026), including mental health, substance use prevention, and overall well-being through informed self-care." },
+      { id: 36, month: 4, day: 31, name: "World No Tobacco Day", type: "day", color: "#C4945A", description: "Highlights the serious health consequences of tobacco use and advocates for effective policies. For many in recovery, addressing tobacco use is an important part of whole-person health." },
+      // JUNE
+      { id: 37, month: 5, day: 1, endDay: 30, name: "PTSD Awareness Month", type: "month", color: "#8E72B0", description: "The entire month of June is dedicated to raising awareness about Post-Traumatic Stress Disorder, educating the public on available treatments, and reducing the stigma that prevents many from seeking help." },
+      { id: 38, month: 5, day: 1, endDay: 30, name: "Men's Health Month", type: "month", color: "#5B8DB8", description: "Focuses on encouraging men to take charge of their physical and mental health, including addiction recovery. Men are statistically less likely to seek help, making this month especially important." },
+      { id: 39, month: 5, day: 21, name: "International Day of Yoga", type: "day", color: "#72A67A", description: "Promotes mental and physical well-being through yoga, which is widely used as a tool for stress reduction, trauma healing, and supporting long-term recovery from substance use disorders." },
+      { id: 40, month: 5, day: 27, name: "National PTSD Awareness Day", type: "day", color: "#8E72B0", description: "Specifically recognized on June 27 to highlight the urgent need for treatment and support for those living with PTSD, including veterans, first responders, and trauma survivors." },
+      { id: 41, month: 5, day: 27, name: "National HIV Testing Day", type: "day", color: "#C45A5A", description: "Highlights the importance of HIV testing and taking steps to stay healthy. HIV is closely connected to substance use through shared needles, making testing and awareness critical in recovery communities." },
+      // JULY
+      { id: 42, month: 6, day: 1, endDay: 31, name: "Minority Mental Health Awareness Month", type: "month", color: "#D4845A", description: "Also known as Bebe Moore Campbell National Minority Mental Health Awareness Month, this observance focuses on the unique mental health challenges faced by racial and ethnic minority groups and promotes culturally competent care." },
+      { id: 43, month: 6, day: 1, endDay: 31, name: "Social Wellness Month", type: "month", color: "#6B9E78", description: "Dedicated to fostering healthy relationships, social connections, and a sense of belonging — all of which are foundational pillars of sustainable recovery." },
+      { id: 44, month: 6, day: 1, endDay: 7, name: "Alcohol Awareness Week", type: "week", color: "#5B8DB8", description: "An annual campaign (July 1–7) aimed at sparking meaningful conversations and advocating for change regarding alcohol consumption, its impacts, and pathways to help." },
+      { id: 45, month: 6, day: 3, name: "Bereaved Parents Day", type: "day", color: "#C4945A", description: "Focused on offering comfort and support for those grieving the loss of a child — deeply relevant to the recovery community, particularly for those who have lost children to overdose." },
+      { id: 46, month: 6, day: 4, name: "Sober 4th of July", type: "day", color: "#8ABBE0", description: "Because Independence Day is often associated with heavy alcohol consumption, many in the recovery community treat July 4th as a major 'Sober 4th,' emphasizing safe, alcohol-free, and intentional celebrations." },
+      { id: 47, month: 6, day: 10, name: "Chronic Disease Awareness Day", type: "day", color: "#72A67A", description: "Focuses on managing and supporting those with long-term health conditions. Substance use disorder is recognized as a chronic disease, making this day relevant to the entire recovery community." },
+      { id: 48, month: 6, day: 19, name: "Recovery Awareness Day", type: "day", color: "#6B9E78", description: "An annual event designed to educate and inspire, focusing on overcoming addiction through community workshops, speaker panels, and shared stories of hope and resilience." },
+      { id: 49, month: 6, day: 22, name: "World Brain Day", type: "day", color: "#8E72B0", description: "Focused on brain health education, World Brain Day is especially relevant to recovery, as addiction is fundamentally a brain disease and understanding neurological health empowers recovery." },
+      { id: 50, month: 6, day: 24, name: "International Self-Care Day", type: "day", color: "#D4708A", description: "A global day to promote the benefits of incorporating self-care into daily routines for mental and physical well-being — a practice that is essential for sustainable recovery." },
+      { id: 51, month: 6, day: 28, name: "World Hepatitis Day", type: "day", color: "#C45A5A", description: "Raises awareness about viral hepatitis, which is highly relevant to long-term health recovery, particularly for those whose substance use involved injection drug use." },
+      // AUGUST
+      { id: 52, month: 7, day: 1, endDay: 31, name: "National Wellness Month", type: "month", color: "#72A67A", description: "August is National Wellness Month, encouraging individuals to prioritize self-care, mental health, and physical well-being as integral parts of a substance-free lifestyle." },
+      { id: 53, month: 7, day: 21, name: "National Fentanyl Awareness Day", type: "day", color: "#C45A5A", description: "Observed on August 21 to raise targeted awareness about the specific and severe dangers of fentanyl, which is now present in many illicit drug supplies and responsible for a devastating number of overdose deaths." },
+      { id: 54, month: 7, day: 30, name: "National Grief Awareness Day", type: "day", color: "#8E72B0", description: "Held the day before International Overdose Awareness Day, this day focuses on supporting those who have experienced loss — deeply relevant to the recovery community where grief is a common part of the journey." },
+      { id: 55, month: 7, day: 31, name: "International Overdose Awareness Day", type: "day", color: "#C45A5A", description: "The world's largest annual campaign to end overdose, remember those lost without stigma, and acknowledge the grief of family and friends. Purple lights and memorials across the globe mark this powerful day of solidarity and hope." },
+      // SEPTEMBER
+      { id: 56, month: 8, day: 1, endDay: 30, name: "National Recovery Month", type: "month", color: "#6B9E78", description: "Established by SAMHSA in 1989, National Recovery Month promotes the societal benefits of prevention, treatment, and recovery. It celebrates the gains made by those in recovery and the dedicated workers who make recovery possible." },
+      { id: 57, month: 8, day: 1, endDay: 30, name: "Suicide Prevention Awareness Month", type: "month", color: "#5B8DB8", description: "A time to break the silence around suicide, share stories of hope, and connect people with resources. Suicide and substance use disorders are closely linked, making this month vital for the recovery community." },
+      { id: 58, month: 8, day: 10, name: "World Suicide Prevention Day", type: "day", color: "#5B8DB8", description: "Observed on September 10th, this global observance unites people in raising awareness about suicide prevention. The International Association for Suicide Prevention promotes hope and help-seeking worldwide." },
+      { id: 59, month: 8, day: 14, name: "National Sober Day", type: "day", color: "#6B9E78", description: "A day to celebrate, encourage, and normalize sobriety, helping those in recovery build a positive, sober lifestyle while inspiring others to explore what sobriety could mean for them." },
+      { id: 60, month: 8, day: 30, name: "International Recovery Day", type: "day", color: "#72A67A", description: "A global observance on September 30 focusing on unity, awareness, and honoring the recovery community worldwide. It celebrates the strength and resilience of those who have chosen recovery." },
+      // OCTOBER
+      { id: 61, month: 9, day: 1, endDay: 31, name: "Substance Use and Misuse Prevention Month", type: "month", color: "#D4845A", description: "Dedicated to raising awareness about substance misuse, reducing harm, and preventing addiction through education, community engagement, and advocacy throughout October." },
+      { id: 62, month: 9, day: 1, endDay: 31, name: "Emotional Wellness Month", type: "month", color: "#72A67A", description: "A month dedicated to reducing stress, practicing self-care, and achieving a healthy emotional balance — all essential skills for long-term recovery and mental well-being." },
+      { id: 63, month: 9, day: 1, endDay: 31, name: "ADHD Awareness Month", type: "month", color: "#8ABBE0", description: "Focuses on educating the public about ADHD and providing resources for support. ADHD and substance use disorders frequently co-occur, and understanding this connection improves recovery outcomes." },
+      { id: 64, month: 9, day: 5, endDay: 11, name: "Mental Illness Awareness Week", type: "week", color: "#8E72B0", description: "Established by Congress, the first full week of October is dedicated to fighting stigma and providing support for the millions of Americans living with mental health conditions." },
+      { id: 65, month: 9, day: 10, name: "World Mental Health Day", type: "day", color: "#8E72B0", description: "A global conversation on October 10 focused on mental health education, awareness, and advocacy. The World Health Organization works to ensure mental health care is accessible to all." },
+      { id: 66, month: 9, day: 10, name: "National Depression Screening Day", type: "day", color: "#5B8DB8", description: "Usually held during Mental Illness Awareness Week, this day offers confidential, free screenings to encourage early identification and intervention for depression, which is deeply connected to substance use." },
+      { id: 67, month: 9, day: 11, name: "National Coming Out Day", type: "day", color: "#D4708A", description: "Promotes safe, supportive environments — crucial for mental health and well-being. LGBTQ+ individuals face elevated rates of substance use disorders, and creating affirming spaces is an act of recovery support." },
+      { id: 68, month: 9, day: 12, endDay: 18, name: "OCD Awareness Week", type: "week", color: "#C4945A", description: "Focused on educating the public about Obsessive-Compulsive Disorder and encouraging people to seek treatment. OCD frequently co-occurs with substance use disorders and responds well to evidence-based therapy." },
+      { id: 69, month: 9, day: 22, name: "Unity Day – Anti-Bullying", type: "day", color: "#F0A500", description: "A day to wear orange, promote kindness, and support mental health by taking a stand against bullying. Bullying is a known risk factor for substance use disorders, especially among young people." },
+      { id: 70, month: 9, day: 23, endDay: 31, name: "Red Ribbon Week", type: "week", color: "#C45A5A", description: "The nation's largest drug prevention awareness campaign, held October 23–31 each year. Red Ribbon Week honors DEA Agent Enrique Camarena and promotes drug-free communities nationwide." },
+      { id: 71, month: 9, day: 29, name: "International Day of Care and Support", type: "day", color: "#6B9E78", description: "Focuses on supporting caregivers and community members who provide essential care to those in recovery. This day recognizes that compassionate support is a pillar of lasting recovery." },
+      // NOVEMBER
+      { id: 72, month: 10, day: 1, endDay: 30, name: "National Gratitude Month", type: "month", color: "#D4845A", description: "Highlights the profound role of gratitude in recovery, strengthening emotional resilience, deepening connections, and supporting lasting mental health throughout the holiday season and beyond." },
+      { id: 73, month: 10, day: 1, endDay: 30, name: "Movember – Men's Health Awareness", type: "month", color: "#5B8DB8", description: "The Movember movement focuses on men's physical and mental health, including depression and suicide prevention. Men in recovery face unique challenges, and this month creates space for important conversations." },
+      { id: 74, month: 10, day: 1, endDay: 30, name: "National Family Caregivers Month", type: "month", color: "#72A67A", description: "Recognizes the vital support provided by family caregivers to those in recovery, focusing on their own need for self-care, community, and respite to sustain their important role." },
+      { id: 75, month: 10, day: 4, name: "National Stress Awareness Day", type: "day", color: "#C4945A", description: "The first Wednesday of November (Nov 4, 2026) focuses on managing and reducing stress for mental well-being. Stress is one of the primary triggers for relapse, making this an important day for recovery communities." },
+      { id: 76, month: 10, day: 19, name: "Great American Smokeout", type: "day", color: "#8ABBE0", description: "A long-standing event on the third Thursday of November (Nov 19, 2026) encouraging smokers to create a quit plan — modeling the behavioral change skills that are central to all recovery." },
+      { id: 77, month: 10, day: 21, name: "International Survivors of Suicide Loss Day", type: "day", color: "#8E72B0", description: "The Saturday before Thanksgiving (Nov 21, 2026), this day brings together those affected by suicide loss for healing and community. Grief from suicide loss is deeply connected to the recovery journey." },
+      { id: 78, month: 10, day: 24, endDay: 30, name: "National Family Week", type: "week", color: "#6B9E78", description: "Emphasizes community support and family connections in recovery (Nov 24–30). Strong family bonds are one of the most protective factors in long-term recovery and relapse prevention." },
+      { id: 79, month: 10, day: 25, name: "International Day to Eliminate Violence Against Women", type: "day", color: "#D4708A", description: "Focuses on safety and recovery for victims of gender-based violence. Trauma from violence is closely linked to substance use disorders, and ending violence is part of building a world where recovery is possible." },
+      // DECEMBER
+      { id: 80, month: 11, day: 1, endDay: 31, name: "National Impaired Driving Prevention Month", type: "month", color: "#C45A5A", description: "Held annually in December to raise awareness about the dangers of driving under the influence of alcohol or drugs during the holiday season, when impaired driving incidents spike dramatically." },
+      { id: 81, month: 11, day: 1, endDay: 31, name: "National Stress-Free Holiday Month", type: "month", color: "#72A67A", description: "December is recognized as a time to prioritize mental health, which is crucial for addiction recovery, as holiday stress, loneliness, and family dynamics are major relapse triggers." },
+      { id: 82, month: 11, day: 13, endDay: 24, name: "12 Days of Christmas – Recovery Edition", type: "week", color: "#6B9E78", description: "A conceptual framework aligning with the 12 Steps of recovery, focusing on gratitude and self-reflection during the festive season. Many recovery communities host special events and meetings around this theme." },
+      { id: 83, month: 11, day: 31, name: "Sober New Year's Eve", type: "day", color: "#8ABBE0", description: "A major proactive recovery event focused on starting the new year with clarity and purpose — often by creating alcohol-free traditions, attending sober celebrations, and leaning into community support." },
+    ];
+
+    function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate(); }
+    function getFirstDayOfMonth(year, month) { return new Date(year, month, 1).getDay(); }
+
+    function getEventsForDay(month, day) {
+      return EVENTS.filter(e => {
+        if (e.month !== month) return false;
+        return e.endDay ? day >= e.day && day <= e.endDay : e.day === day;
+      });
+    }
+
+    function typeLabel(e) {
+      if (e.type === "month") return "Awareness Month";
+      if (e.type === "week") return "Awareness Week";
+      return "Awareness Day";
+    }
+
+    function dateLine(e) {
+      if (e.type === "month") return "All of " + MONTHS[e.month];
+      if (e.endDay) return MONTHS[e.month] + " " + e.day + "–" + e.endDay;
+      return MONTHS[e.month] + " " + e.day;
+    }
+
+    function App() {
+      const today = new Date();
+      const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+      const [selectedEvent, setSelectedEvent] = useState(null);
+      const [toastMsg, setToastMsg] = useState(null);
+      const [filter, setFilter] = useState("all");
+      const year = today.getFullYear();
+
+      const daysInMonth = getDaysInMonth(year, currentMonth);
+      const firstDay = getFirstDayOfMonth(year, currentMonth);
+      const monthEvents = EVENTS.filter(e => e.month === currentMonth);
+      const filteredEvents = filter === "all" ? monthEvents : monthEvents.filter(e => e.type === filter);
+
+      function handleShareExperience() {
+        setToastMsg("✓ Routing to main feed to share your experience!");
+        setTimeout(() => setToastMsg(null), 4000);
+        setSelectedEvent(null);
+      }
+
+      function changeMonth(dir) {
+        setCurrentMonth(m => (m + dir + 12) % 12);
+        setSelectedEvent(null);
+        setFilter("all");
+      }
+
+      const calendarCells = [];
+      for (let i = 0; i < firstDay; i++) calendarCells.push(null);
+      for (let d = 1; d <= daysInMonth; d++) calendarCells.push(d);
+
+      const phoneStyle = {
+        width: 393,
+        height: 852,
+        background: "#F5F1EC",
+        borderRadius: 52,
+        overflow: "hidden",
+        boxShadow: "0 50px 120px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.15)",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+      };
+
+      return (
+        <div style={phoneStyle}>
+          {/* Status bar */}
+          <div style={{ height: 44, background: "#12301F", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 26px", flexShrink: 0, position: "relative" }}>
+            <span style={{ color: "#fff", fontSize: 13, fontFamily: "sans-serif", fontWeight: 600, zIndex: 2 }}>9:41</span>
+            <div style={{ width: 126, height: 34, background: "#000", borderRadius: 20, position: "absolute", left: "50%", transform: "translateX(-50%)", top: 4, zIndex: 1 }} />
+            <div style={{ display: "flex", gap: 5, alignItems: "center", zIndex: 2 }}>
+              <div style={{ width: 18, height: 11, border: "1.5px solid white", borderRadius: 3, display: "flex", alignItems: "center", padding: "0 2px" }}>
+                <div style={{ height: 6, flex: 1, background: "#5CF075", borderRadius: 1 }} />
+                <div style={{ width: 2, height: 5, background: "white", borderRadius: "0 1px 1px 0", marginLeft: 2 }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Header */}
+          <div style={{ background: "linear-gradient(160deg, #12301F 0%, #1C4830 100%)", padding: "16px 22px 20px", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>🌿</span>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "sans-serif", letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 600 }}>Sober Sidekick</span>
+            </div>
+            <h1 style={{ color: "#fff", fontSize: 20, fontWeight: "normal", margin: 0, lineHeight: 1.35, fontFamily: "Georgia, serif" }}>
+              Year-Round Recovery<br /><span style={{ color: "#8DC4A0", fontStyle: "italic" }}>Awareness Calendar</span>
+            </h1>
+          </div>
+
+          {/* Month nav */}
+          <div style={{ background: "#1C4830", padding: "10px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+            <button onClick={() => changeMonth(-1)} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 34, height: 34, borderRadius: "50%", cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ color: "#fff", fontSize: 18, fontFamily: "Georgia, serif" }}>{MONTHS[currentMonth]}</div>
+              <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, fontFamily: "sans-serif" }}>{year}</div>
+            </div>
+            <button onClick={() => changeMonth(1)} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 34, height: 34, borderRadius: "50%", cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+          </div>
+
+          {/* Scrollable content */}
+          <div style={{ flex: 1, overflowY: "auto", paddingBottom: 68 }}>
+
+            {/* Calendar grid */}
+            <div style={{ background: "#fff", margin: "12px 12px 0", borderRadius: 18, overflow: "hidden", boxShadow: "0 2px 14px rgba(0,0,0,0.07)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", background: "#1C4830" }}>
+                {DAYS_OF_WEEK.map(d => (
+                  <div key={d} style={{ textAlign: "center", padding: "7px 0", color: "rgba(255,255,255,0.7)", fontSize: 10, fontFamily: "sans-serif", fontWeight: 700, letterSpacing: 0.5 }}>{d}</div>
+                ))}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "1px", background: "#ece8e2" }}>
+                {calendarCells.map((day, idx) => {
+                  const dayEvts = day ? getEventsForDay(currentMonth, day) : [];
+                  const isToday = day === today.getDate() && currentMonth === today.getMonth();
+                  return (
+                    <div key={idx} style={{ background: isToday ? "#EBF5EE" : "#fff", minHeight: 44, padding: "5px 3px 3px", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                      {day && <>
+                        <div style={{ width: 23, height: 23, borderRadius: "50%", background: isToday ? "#1C4830" : "transparent", color: isToday ? "#fff" : "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontFamily: "sans-serif", fontWeight: isToday ? 700 : 400 }}>{day}</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 1.5, maxWidth: 28 }}>
+                          {dayEvts.slice(0, 4).map(e => (
+                            <div key={e.id} onClick={() => setSelectedEvent(e)} style={{ width: 5, height: 5, borderRadius: "50%", background: e.color, cursor: "pointer", flexShrink: 0 }} />
+                          ))}
+                          {dayEvts.length > 4 && <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#bbb", flexShrink: 0 }} />}
+                        </div>
+                      </>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 14, padding: "8px 0 2px" }}>
+              {[["#5B8DB8","Monthly"],["#8E72B0","Weekly"],["#C45A5A","Single Day"]].map(([color, label]) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+                  <span style={{ fontSize: 10, fontFamily: "sans-serif", color: "#999" }}>{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Filter tabs */}
+            <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px" }}>
+              {[["all","All"],["month","Month"],["week","Week"],["day","Day"]].map(([val, label]) => (
+                <button key={val} onClick={() => setFilter(val)} style={{
+                  padding: "5px 11px",
+                  borderRadius: 20,
+                  border: "none",
+                  background: filter === val ? "#1C4830" : "#E8E4DF",
+                  color: filter === val ? "#fff" : "#666",
+                  fontSize: 11,
+                  fontFamily: "sans-serif",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}>{label}</button>
+              ))}
+              <span style={{ marginLeft: "auto", fontSize: 11, fontFamily: "sans-serif", color: "#999" }}>{filteredEvents.length} events</span>
+            </div>
+
+            {/* Event list */}
+            <div style={{ padding: "4px 12px 10px" }}>
+              {filteredEvents.length === 0 && (
+                <div style={{ textAlign: "center", padding: "30px", color: "#aaa", fontFamily: "sans-serif", fontSize: 13 }}>🌱 No events match this filter.</div>
+              )}
+              {filteredEvents.map(event => (
+                <button key={event.id} onClick={() => setSelectedEvent(event)} style={{
+                  width: "100%",
+                  background: "#fff",
+                  borderRadius: 13,
+                  padding: "12px 13px",
+                  marginBottom: 7,
+                  boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
+                  cursor: "pointer",
+                  borderLeft: "4px solid " + event.color,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  textAlign: "left",
+                  border: "none",
+                  borderLeft: "4px solid " + event.color,
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 9, fontFamily: "sans-serif", color: event.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 }}>
+                      {typeLabel(event)} · {dateLine(event)}
+                    </div>
+                    <div style={{ fontSize: 14, fontFamily: "Georgia, serif", color: "#1a1a1a", lineHeight: 1.3 }}>{event.name}</div>
+                  </div>
+                  <span style={{ color: "#ccc", fontSize: 18 }}>›</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom nav */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid #eee", padding: "7px 0 18px", display: "flex", justifyContent: "space-around" }}>
+            {[["🏠","Home",false],["📅","Calendar",true],["💬","Feed",false],["👤","Profile",false]].map(([icon, label, active]) => (
+              <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: "pointer", opacity: active ? 1 : 0.45 }}>
+                <span style={{ fontSize: 21 }}>{icon}</span>
+                <span style={{ fontSize: 9, fontFamily: "sans-serif", color: active ? "#1C4830" : "#888", fontWeight: active ? 700 : 400 }}>{label}</span>
+                {active && <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#1C4830" }} />}
+              </div>
+            ))}
+          </div>
+
+          {/* Detail sheet */}
+          {selectedEvent && (
+            <div onClick={() => setSelectedEvent(null)} style={{
+              position: "absolute", inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              display: "flex", alignItems: "flex-end", justifyContent: "center",
+              zIndex: 200,
+            }}>
+              <div onClick={e => e.stopPropagation()} style={{
+                width: "100%",
+                maxHeight: "80%",
+                background: "#F5F1EC",
+                borderRadius: "28px 28px 0 0",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                animation: "slideUp 0.28s cubic-bezier(0.32,0.72,0,1)",
+                boxShadow: "0 -10px 60px rgba(0,0,0,0.3)",
+              }}>
+                <div style={{ background: selectedEvent.color, padding: "12px 22px 18px", flexShrink: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+                    <div style={{ width: 38, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.35)" }} />
+                  </div>
+                  <div style={{ display: "inline-block", background: "rgba(0,0,0,0.2)", color: "#fff", padding: "3px 10px", borderRadius: 20, fontSize: 9, fontFamily: "sans-serif", fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8 }}>
+                    {typeLabel(selectedEvent)}
+                  </div>
+                  <h2 style={{ color: "#fff", fontFamily: "Georgia, serif", fontSize: 21, margin: 0, lineHeight: 1.3, fontWeight: "normal" }}>{selectedEvent.name}</h2>
+                  <div style={{ color: "rgba(255,255,255,0.7)", fontFamily: "sans-serif", fontSize: 12, marginTop: 5 }}>{dateLine(selectedEvent)}</div>
+                </div>
+                <div style={{ overflowY: "auto", padding: "18px 22px 30px", flex: 1 }}>
+                  <p style={{ fontFamily: "sans-serif", fontSize: 14.5, color: "#444", lineHeight: 1.75, margin: "0 0 22px" }}>
+                    {selectedEvent.description}
+                  </p>
+                  <button onClick={handleShareExperience} style={{
+                    width: "100%",
+                    padding: "15px",
+                    background: "linear-gradient(135deg, #1C4830 0%, #2A6644 100%)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 16,
+                    fontSize: 16,
+                    fontFamily: "Georgia, serif",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    boxShadow: "0 6px 24px rgba(28,72,48,0.45)",
+                    letterSpacing: 0.3,
+                    marginBottom: 12,
+                  }}>
+                    <span style={{ fontSize: 20 }}>💬</span> Share Your Experience!
+                  </button>
+                  <div style={{ background: "#EEECE9", borderRadius: 10, padding: "12px 16px" }}>
+                    <p style={{ fontSize: 13, fontFamily: "sans-serif", color: "#666", lineHeight: 1.65, textAlign: "center", margin: 0 }}>
+                      Sharing your thoughts on this recognized day helps increase awareness and togetherness.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Toast */}
+          {toastMsg && (
+            <div style={{
+              position: "absolute", top: 60, left: "50%", transform: "translateX(-50%)",
+              background: "#1C4830", color: "#fff",
+              padding: "14px 22px", borderRadius: 16,
+              fontFamily: "sans-serif", fontSize: 13,
+              maxWidth: 310, textAlign: "center",
+              zIndex: 300, lineHeight: 1.6,
+              boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+            }}>
+              {toastMsg}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
